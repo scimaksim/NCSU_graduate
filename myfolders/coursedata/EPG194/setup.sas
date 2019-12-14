@@ -3,7 +3,7 @@
 /* with the path to your EPG194/data folder    */
 /***********************************************/
 
-%let path=FILEPATH;
+%let path=/folders/myfolders/coursedata/EPG194/data;
 
 /**********************************************/
 /* DO NOT EDIT THE CODE BELOW                 */
