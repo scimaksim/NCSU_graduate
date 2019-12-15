@@ -39,8 +39,8 @@
 ***********************************************************;
 
 *Step 1;
-proc sort data=pg1.storm_detail out=storm_clean;
-	by ;
+proc sort data=pg1.storm_detail out=storm_clean noduprecs dupout=storm_dups;
+	by _ALL_;
 run;
 
 *Step 2;
@@ -50,6 +50,6 @@ proc sort data=pg1.storm_detail out=min_pressure;
 run;
 
 *Step 3;
-proc sort data=min_pressure;
-	by  ;
+proc sort data=min_pressure nodupkey;
+	by descending Season Basin Name;
 run;

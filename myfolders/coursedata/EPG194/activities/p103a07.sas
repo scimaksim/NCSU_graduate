@@ -8,7 +8,7 @@
 *       MaxWindMPH?                                       *;
 ***********************************************************;
 
-proc sort data=pg1.storm_summary out=;
-	where ;
-	by ;
+proc sort data=pg1.storm_summary out=storm_sort;
+	where Basin="NA" or Basin="na";
+	by descending MaxWindMPH;
 run;

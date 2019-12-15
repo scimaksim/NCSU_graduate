@@ -8,5 +8,5 @@
 
 proc print data=pg1.np_summary;
 	var Type ParkName;
-	*Add a WHERE statement;
+	where ParkName like '%Preserve%';
 run;

@@ -19,10 +19,10 @@
 ***********************************************************;
 
 proc print data=pg1.storm_summary(obs=20);
-	format Lat Lon 4. StartDate EndDate date9.;
+	format Lat Lon 4. StartDate EndDate date11.;
 run;
 
 proc freq data=pg1.storm_summary order=freq;
 	tables StartDate;
-	*Add a FORMAT statement;
+	format StartDate MONNAME.;
 run;
