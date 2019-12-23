@@ -17,6 +17,7 @@
 title "Frequency Report for Basin and Storm Month";
 
 proc freq data=pg1.storm_final order=freq noprint;
-	tables StartDate BasinName / out= ;
+	tables StartDate  / out=month_count;
+	tables BasinName / out=basin_count;
 	format StartDate monname.;
 run;

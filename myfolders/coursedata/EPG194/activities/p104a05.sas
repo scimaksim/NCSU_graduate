@@ -11,5 +11,6 @@
 
 data storm_wingavg;
 	set pg1.storm_range;
-	*Add assignment statements;
+	WingAvg = MEAN(wind1, wind2, wind3, wind4);
+	WindRange = RANGE(wind1, wind2, wind3, wind4);
 run;

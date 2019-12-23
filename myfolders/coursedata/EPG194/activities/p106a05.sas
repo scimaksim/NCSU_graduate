@@ -10,7 +10,7 @@
 *       Microsoft Word.                                   *;
 ***********************************************************;
 
-ods powerpoint file="&outpath/pressure.pptx" style=powerpointlight;
+ods rtf file="&outpath/pressure.rtf" style=sapphire startpage=no;
 
 title "Minimum Pressure Statistics by Basin";
 ods noproctitle;
@@ -25,4 +25,4 @@ proc sgscatter data=pg1.storm_final;
 run;
 title;  
 
-ods powerpoint close;
+ods rtf close;

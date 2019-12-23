@@ -1,10 +1,10 @@
-[W 16:47:46.900 LabApp] All authentication is disabled.  Anyone who can connect to this server will be able to run code.
-[I 16:47:46.910 LabApp] JupyterLab extension loaded from /usr/lib64/python3.5/site-packages/jupyterlab
-[I 16:47:46.910 LabApp] JupyterLab application directory is /usr/share/jupyter/lab
-[W 16:47:46.912 LabApp] JupyterLab server extension not enabled, manually loading...
-[I 16:47:46.914 LabApp] JupyterLab extension loaded from /usr/lib64/python3.5/site-packages/jupyterlab
-[I 16:47:46.914 LabApp] JupyterLab application directory is /usr/share/jupyter/lab
-[I 16:47:46.915 LabApp] Serving notebooks from local directory: /folders/myfolders
-[I 16:47:46.915 LabApp] The Jupyter Notebook is running at:
-[I 16:47:46.915 LabApp] http://(localhost.localdomain or 127.0.0.1):8890/jupyter/
-[I 16:47:46.915 LabApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[W 23:32:49.467 LabApp] All authentication is disabled.  Anyone who can connect to this server will be able to run code.
+[I 23:32:49.600 LabApp] JupyterLab extension loaded from /usr/lib64/python3.5/site-packages/jupyterlab
+[I 23:32:49.600 LabApp] JupyterLab application directory is /usr/share/jupyter/lab
+[W 23:32:49.603 LabApp] JupyterLab server extension not enabled, manually loading...
+[I 23:32:49.606 LabApp] JupyterLab extension loaded from /usr/lib64/python3.5/site-packages/jupyterlab
+[I 23:32:49.606 LabApp] JupyterLab application directory is /usr/share/jupyter/lab
+[I 23:32:49.606 LabApp] Serving notebooks from local directory: /folders/myfolders
+[I 23:32:49.606 LabApp] The Jupyter Notebook is running at:
+[I 23:32:49.606 LabApp] http://(localhost.localdomain or 127.0.0.1):8890/jupyter/
+[I 23:32:49.606 LabApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).

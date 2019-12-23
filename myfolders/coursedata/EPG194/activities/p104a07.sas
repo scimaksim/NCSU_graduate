@@ -12,8 +12,8 @@ data storm_cat;
 	keep Name Basin MinPressure StartDate PressureGroup;
 	*add ELSE keyword and remove final condition;
 	if MinPressure=. then PressureGroup=.;
-	if MinPressure<=920 then PressureGroup=1;
-	if MinPressure>920 then PressureGroup=0;
+	else if MinPressure<=920 then PressureGroup=1;
+	else PressureGroup=0;
 run;
 
 proc freq data=storm_cat;

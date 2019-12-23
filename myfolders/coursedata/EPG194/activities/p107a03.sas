@@ -11,10 +11,10 @@
 *    4) How many of the top 10 storms occurred in 2005?   *;
 ***********************************************************;
 
-proc sql;
-*Modify the query to create a table;
+proc sql outobs=10;
+create table top_damage as
 select Event, Date format=monyy7., Cost format=dollar16.
     from pg1.storm_damage
     order by Cost desc;
-    *Add a title and query to create a top 10 report;
+    title "Top 10 Storms by Damage Cost";
 quit;

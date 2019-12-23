@@ -15,10 +15,10 @@
 *         output out=wind_stats mean=AvgWind max=MaxWind; *;
 ***********************************************************;
 
-proc means data=pg1.storm_final mean median max;
+proc means data=pg1.storm_final noprint;
 	var MaxWindMPH;
 	class BasinName;
-	*ways 1;
-	output out=wind_stats;
+	ways 1;
+	output out=wind_stats mean=AvgWind max=MaxWind;
 run;
 

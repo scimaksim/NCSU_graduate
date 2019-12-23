@@ -14,7 +14,7 @@
 *       the Excel file.                                   *;
 ***********************************************************;
 
-*Add ODS statement;
+ods excel "&outpath/pressure.xlsx";
 
 title "Minimum Pressure Statistics by Basin";
 ods noproctitle;
@@ -29,6 +29,6 @@ proc sgscatter data=pg1.storm_final;
 run;
 title;  
 
-*Add ODS statement;
-
 ods proctitle;
+
+ods excel close;

@@ -20,9 +20,11 @@
 *    LIBNAME libref CLEAR;                                *; 
 ***********************************************************;
 
-libname xl_lib ;
+libname xl_lib xlsx "&outpath/storm.xlsx";
 
-data storm_final;
-	set pg1.storm_final;
-	drop Lat Lon Basin OceanCode;
+data xl_lib.storm_final;
+    set pg1.storm_final;
+    drop Lat Lon Basin OceanCode;
 run;
+
+libname xl_lib clear;

@@ -10,10 +10,10 @@
 *       Atlantic and run the program again.               *;
 ***********************************************************;
 
-%let oc=Pacific;
+%let oc=Atlantic;
 ods noproctitle;
 title 'Storm Analysis';
-title2 'Pacific Ocean';
+title2 "&oc Ocean";
 
 proc means data=pg1.storm_final;
 	where Ocean="&oc";
