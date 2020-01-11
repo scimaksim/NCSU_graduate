@@ -7,20 +7,23 @@ Modification Date: N/A
 Reason for Modification: N/A
 */
 
+* Change to working directory; 
+x 'cd L:\';
+
 * Create library reference to requisite dataset;
-libname st445 'L:\st445\Data';
+libname st445 'st445\Data';
 
 * Close default ods output and open PDF and RTF files for writing;
 ods listing close;
 ods pdf file="C:\Users\mvnikifo\Quakes Data.pdf" style=Journal2;
 ods rtf file="C:\Users\mvnikifo\Quakes.rtf";
 
-* Exclude printing of proc contents into rtf file;
+* Exclude all output of 'proc contents' in rtf file;
 ods rtf exclude all;
 
 /*Print and save the variable-level metadata in column-order rather than alphabetical
 No other metadata should be printed */
-title "Variable-level Metadata";
+title "Variable Metadata";
 proc contents data=st445.quakes varnum;
  ods select position;
 run;
