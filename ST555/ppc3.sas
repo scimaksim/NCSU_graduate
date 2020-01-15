@@ -12,7 +12,7 @@ libname PPC3 'L:\st555\Data';
 
 * Don't print anything to the listing window;
 ods listing close;
-* Product PDF using Sapphire style;
+* Produce PDF using Sapphire style;
 ods pdf file='GULFOIL.pdf' style=Sapphire;
 
 * Print first five observations, omit all ODS output except for variables;
@@ -20,7 +20,7 @@ proc contents data=ppc3.gulfoil (obs=5);
   ods select variables;
 run;
 
-* Create sorted data setin WORK library;
+* Create sorted data set in WORK library;
 proc sort data=ppc3.gulfoil
           out=sorted_gulfoil;
   by descending regionname descending protractionname date;
