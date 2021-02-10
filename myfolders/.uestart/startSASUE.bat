@@ -1,1 +1,1 @@
-start "SAS University Edition" http://172.16.83.128
+start "SAS University Edition" http://localhost:10080
