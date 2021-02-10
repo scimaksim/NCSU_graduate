@@ -33,16 +33,33 @@ PROC FREQ DATA = ST513.RecastStudentData;
   TABLES schoolsup famsup paid;
 RUN;
 
-*Side-by-side barplot of extra paid classes and final grades;
+*Histogram with a smoothed overlay - extra paid classes and final grades;
 PROC SGPANEL DATA = ST513.RecastStudentData;
-  PANELBY sex;
-  VBAR G3 / GROUP = famsup
-             GROUPDISPLAY = cluster;
+  PANELBY paid;
+  HISTOGRAM G3;
+  DENSITY G3 / TYPE = kernel;
+  REFLINE 10.42 / AXIS = x 
+            LINEATTRS = (Pattern = 4 
+                         Thickness = 3);
 RUN;
 
+*Histogram with a smoothed overlay - romantic relationships and final grades;
+PROC SGPANEL DATA = ST513.RecastStudentData;
+  PANELBY romantic;
+  HISTOGRAM G3;
+  DENSITY G3 / TYPE = kernel;
+  REFLINE 10.42 / AXIS = x 
+            LINEATTRS = (Pattern = 4 
+                         Thickness = 3);
+RUN;
+
+PROC SGPANEL DATA = ST513.RecastStudentData;
+  PANELBY romantic;
+  VBAR G3;
+RUN;
 
 PROC SGPLOT DATA = ST513.RecastStudentData;
-  VBAR G3 / GROUP = paid
+  VBAR G3 / GROUP = romantic
              GROUPDISPLAY = cluster;
 RUN;
 
@@ -53,7 +70,7 @@ Numerical correlations
 *************************************************************************************;
 
 *Calculate the mean of final grades (G3);
-PROC MEANS DATA = ST513.RecastStudentData;
+PROC MEANS DATA = ST513.RecastStudentData MEAN STD MEDIAN;
   VAR G3;
 RUN;
 
