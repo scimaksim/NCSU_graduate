@@ -33,25 +33,24 @@ PROC FREQ DATA = ST513.RecastStudentData;
   TABLES schoolsup famsup paid;
 RUN;
 
-
-
-
-
-
-PROC FREQ DATA = ST513.RecastStudentData;
-  TABLES schoolsup*G3 famsup*G3 paid*G3;
-RUN;
-
-PROC SGPLOT DATA = ST513.RecastStudentData;
-  VBAR internet;
-RUN;
-
-PROC SGPLOT DATA = ST513.RecastStudentData;
-  VBAR sex / GROUP = schoolsup
+*Side-by-side barplot of extra paid classes and final grades;
+PROC SGPANEL DATA = ST513.RecastStudentData;
+  PANELBY sex;
+  VBAR G3 / GROUP = famsup
              GROUPDISPLAY = cluster;
 RUN;
 
+
+PROC SGPLOT DATA = ST513.RecastStudentData;
+  VBAR G3 / GROUP = paid
+             GROUPDISPLAY = cluster;
 RUN;
+
+
+
+*************************************************************************************
+Numerical correlations
+*************************************************************************************;
 
 *Calculate the mean of final grades (G3);
 PROC MEANS DATA = ST513.RecastStudentData;
@@ -64,13 +63,6 @@ PROC SGPLOT DATA = RecastStudentData;
   REFLINE 10.42 / AXIS = x
                   LINEATTRS = (Pattern = 4 Thickness = 3);
 RUN;
-
-
-*************************************************************************************
-Numerical correlations
-*************************************************************************************;
-
-
 
 *Calculate correlation between first period grades, second period grades, and final grades;
 PROC CORR DATA = ST513.RecastStudentData;
