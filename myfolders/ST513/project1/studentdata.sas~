@@ -33,14 +33,10 @@ PROC FREQ DATA = ST513.RecastStudentData;
   TABLES schoolsup famsup paid;
 RUN;
 
-
-
-
-
-
 PROC FREQ DATA = ST513.RecastStudentData;
-  TABLES schoolsup*G3 famsup*G3 paid*G3;
+  TABLES internet*G3;
 RUN;
+
 
 PROC SGPLOT DATA = ST513.RecastStudentData;
   VBAR internet;
