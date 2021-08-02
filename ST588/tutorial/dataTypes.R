@@ -69,3 +69,5 @@ class(T)
 2 > 3
 "data" == "stats"
 "data" < "stats"
+
+2+3
