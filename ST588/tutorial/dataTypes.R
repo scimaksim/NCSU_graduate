@@ -70,9 +70,4 @@ class(T)
 "data" == "stats"
 "data" < "stats"
 
-
-install.packages("tidyverse")
-library(tidyverse)
-mpg
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy))
+2+3
