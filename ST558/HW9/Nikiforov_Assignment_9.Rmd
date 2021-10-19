@@ -12,99 +12,78 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(caret)
 ```
+
+## Part 1: kNN
 
 ### 1. 
 
-_Read in the data and modify the variables as mentioned in the notes. Print the updated data object out._
+_Read in the `heart.csv` data file._
 
 ```{r , echo=TRUE, eval=TRUE}
-# Read in space-separated data using "read_table()" function.
-# Remove extra column of NULLs by selecting only the columns we want.
-crabData <- read_table(file = "./crabs.txt", col_names = TRUE) %>% select("color", "spine", "width", "satell", "weight", "y")
-
-# Use conditionals to overwrite color, spine, and y columns
-crabData$color <- if_else(crabData$color == 2, "light", 
-                          if_else(crabData$color == 3, "medium",
-                                  if_else(crabData$color == 4, "dark",
-                                          if_else(crabData$color == 5, "darker", "undefined"))))
-
-crabData$spine <- if_else(crabData$spine == 1, "Both Good",
-                          if_else(crabData$spine == 2, "One Worn/Broken",
-                                  if_else(crabData$spine == 3, "Both Worn/Broken", "Undefined")))
-
-crabData$y <- if_else(crabData$y == 1, "At least 1 Satellite", "No Satellite")
-
-# Convert the three variables (color, spine, y) to factors.
-crabData$color <- as.factor(crabData$color)
-crabData$spine <- as.factor(crabData$spine)
-crabData$y <- as.factor(crabData$y)
-
-# Print the updated data
-crabData
+# Read in space-separated data using "read_csv()" function.
+# Remove column ST_Slope, convert HeartDisease to a factor
+heartData <- read.csv(file = "./heart.csv") %>% select(-ST_Slope)
+heartData
 ``` 
 
 ### 2. 
 
-_Create a two-way contingency table between the satellite and spine variables. Write text describing what two of the numbers in the table represent._
-
-Contingency tables show the frequency of observations within a given within category. For example, in the table below, we see that 11 horseshoe crabs with both spines in good condition had no satellites and one such crab had as many as 14 satellites. Meanwhile, 43 crabs with both spines worn or broken had no satellites, 13 such crabs had 1 satellite, and 2 such crabs had 8 satellites. One crab with both spines worn or broken had as many as 15 satellites.  
+_Create dummy columns corresponding to the values of `Sex`, `ChestPainType`, and `RestingECG` for use in our kNN fit._
 
 ```{r , echo=TRUE, eval=TRUE}
-table(crabData$spine, crabData$satell)
-```
+# Read in space-separated data using "read_csv()" function.
+head(model.matrix(HeartDisease ~ ., data = heartData))
+``` 
+
+```{r , echo=TRUE, eval=TRUE}
+# Read in space-separated data using "read_csv()" function.
+dummies <- dummyVars( ~ ., data = heartData)
+newHeartData <- predict(dummies, newdata = heartData)
+newHeartData <- as_data_frame(newHeartData)
+newHeartData$HeartDisease <- as.factor(newHeartData$HeartDisease)
+newHeartData
+``` 
 
 ### 3.
 
-_Create a three way table between the color, spine, and satellite variables. Output the table._
+_Now split the data set you’ve created into a training and testing set. Use `p = 0.8`._
 
 Here, we see that a medium-colored crab with both spines in "good" condition had as many as 14 satellites. Crabs with one spine worn or broken did not exceed 6 satellites.  
 
 ```{r , echo=TRUE, eval=TRUE}
-# Create a three-way table of color, spine, and satellite (CSS)
-tabCSS <- table(crabData$color, crabData$satell, crabData$spine)
-tabCSS
+# p = 0.8 places 80% of observations in the training set
+set.seed(50)
+heartIndex <- createDataPartition(newHeartData$HeartDisease, p = 0.8, list = FALSE)
+heartTrain <- diamonds[heartIndex, ]
+heartTest <- diamonds[-heartIndex, ]
 ```
 
-_Then, using that table object, print out a two-way table between spine and satellite for crabs with ‘darker’ color. Write text describing what one of the numbers in the table represents._
-
-In the two-way table below, we see that that 13 "darker" colored crabs with both spines worn or broken had no satellites but one such crab had as many as 12 satellites. The data set also has 1 "darker" crab with both spines in good condition and 1 "darker" crab with a worn or broken spine. Neither crab has a satellite. 
+### 4.
+_Finally, train the kNN model. Use repeated 10 fold cross-validation, with the number of repeats being 3. You should also preprocess the data by centering and scaling. Lastly, set the `tuneGrid` so that you are considering values of k of 1, 2, 3, …, 40._
 
 ```{r , echo=TRUE, eval=TRUE}
-# Identify structure of table object to determine array positions
-str(tabCSS)
+# 
 
-# Return all spine and satellite information for crabs with "darker" color [2, , ] 
-tabCSS[2, , ]
+fit <- train(HeartDisease ~ ., data = newHeartData,
+               method = "knn",
+               preProcess = c("center", "scale"),
+               trControl = trainControl(method = "repeatedcv", 
+                                        number = 10, repeats = 3),  
+               tuneGrid = expand.grid(k = 1:40)) 
 ```
 
-### 4. 
+### 5. 
 
-_Recreate the side-by-side bar plots. Write text that comments on any patterns you see in one of the plots._
-
-Medium-colored crabs are the most prevalent in this data set and the majority have at least 1 satellite.   
+_Check how well your model does on the test set using the confusionMatrix() function._
 
 ```{r , echo=TRUE, eval=TRUE}
-g <- ggplot(data = crabData, aes(x = color))
-
-# Set legend title with scale_fill_discrete()
-g + geom_bar(aes(fill = y), position = "dodge") +
-  labs(x = "Female Crab Color") +
-  scale_fill_discrete(name = " ") +
-  coord_flip()
+# See confusion matrix on test set (correct/incorrect predictions)
+confusionMatrix(data = newHeartData$HeartDisease, reference = predict(fit, newdata = newHeartData))
 ```
 
-Moreover, most crabs in the data set have spines which are both worn or broken. The number of such crabs with at least 1 satellite is nearly double the number of crabs without a satellite.
-
-```{r , echo=TRUE, eval=TRUE}
-g <- ggplot(data = crabData, aes(x = spine))
-
-# Set legend title with scale_fill_discrete()
-g + geom_bar(aes(fill = y), position = "dodge") +
-  labs(x = "Female Crab Spine Condition") +
-  scale_fill_discrete(name = " ") +
-  coord_flip()
-```
+## Part 2: Ensemble
 
 Medium-colored crabs outnumber other colors for all three spine conditions. 
 
