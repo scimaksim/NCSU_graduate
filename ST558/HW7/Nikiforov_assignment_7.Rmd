@@ -1,0 +1,261 @@
+---
+title: "Assignment 7"
+author: "Maksim Nikiforov"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+library(tidyverse)
+library(caret)
+```
+
+## Read in the data set
+
+Since we have a comma-separated file, we can read in our training data using the function `read_csv()`.
+
+```{r render, echo=TRUE, eval=TRUE}
+# Read in CSV train file, subset data
+wineTrainingData <- as_tibble(read.csv(file = "./wineQualityTrain.csv"))
+names(wineTrainingData)
+```
+
+## Plan our models
+
+When planning our initial models, we can either start with the single best variable and add more or consider all variables and remove ones which are the least significant. When considering a subset, we can remove certain predictors if they are colinear (highly correlated within the  same model).
+
+In this case, we can start with a model that incorporates all terms. 
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Create model with all terms
+linearModel1 <- lm(quality ~ ., data = wineTrainingData)
+summary(linearModel1)
+```
+
+We can then see which predictor variable we may want to delete.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Compute AIC values to drop the lowest one(s)
+drop1(linearModel1)
+```
+
+Here, the Akaike information criterion (AIC) is lowest for `citric.acid` (-737.12), so we remove this term from our model. 
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Get model formula
+formula(linearModel1)
+
+# Create model without citric.acid
+linearModel2 <- lm(quality ~ fixed.acidity + volatile.acidity + residual.sugar + 
+    chlorides + free.sulfur.dioxide + total.sulfur.dioxide + 
+    density + pH + sulphates + alcohol + type, data = wineTrainingData)
+summary(linearModel2)
+```
+
+We can then see which predictor variable we may want to delete next.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Compute AIC values to drop the lowest one(s)
+drop1(linearModel2)
+```
+
+Here, the AIC is lowest for `pH` (-737.31), so we remove this term from our model. 
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Create model without citric.acid, pH
+linearModel3 <- lm(quality ~ fixed.acidity + volatile.acidity + residual.sugar + 
+    chlorides + free.sulfur.dioxide + total.sulfur.dioxide + 
+    density + sulphates + alcohol + type, data = wineTrainingData)
+summary(linearModel3)
+```
+
+We repeat this process several more times. 
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Compute AIC values to drop the lowest one(s)
+drop1(linearModel3)
+```
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Create model without citric.acid, pH, chlorides
+linearModel4 <- lm(quality ~ fixed.acidity + volatile.acidity + residual.sugar + 
+                     free.sulfur.dioxide + total.sulfur.dioxide + 
+                     density + sulphates + alcohol + type, data = wineTrainingData)
+summary(linearModel4)
+```
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Compute AIC values to drop the lowest one(s)
+drop1(linearModel4)
+```
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Create model without citric.acid, pH, chlorides, free.sulfur.dioxide
+linearModel5 <- lm(quality ~ fixed.acidity + volatile.acidity + residual.sugar + 
+                    total.sulfur.dioxide + density + sulphates + alcohol + 
+                     type, data = wineTrainingData)
+summary(linearModel5)
+```
+
+By this point, our multiple R-squared values are decreasing and we may wish to stop. Since there was little difference in models using all predictors and models without `citric.acid` and `pH`, we may wish to check if these two variables are colinear.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Visualizations to look at relationships
+# income is our response
+varAnalysis <- wineTrainingData %>% select(citric.acid, pH, quality)
+GGally::ggpairs(varAnalysis)
+```
+There appears to be a weak relationship between the two. Therefore, we may wish to consider a model that excludes `citric.acid` and `pH`. 
+
+## Using the `caret` package
+
+The `preProcess()` function in the `caret` package ensures that, when we center and scale our training data, the set's mean and standard deviation values are saved and applied to the test data to validate our predictions.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Standardize all numeric columns, 
+# save mean and standard deviation from train set for 
+# future application to test set
+preProcValues <- preProcess(wineTrainingData, method = c("center", "scale"))
+trainTransformed <- predict(preProcValues, wineTrainingData)
+```
+
+## Train our models
+
+We can use the `trainControl()` function in the `caret` package to specify how we will fit our model to the training set. In this case, we specify ten-fold cross-validation, which splits our training set into ten unique partitions and uses nine as the "training" data. The tenth partition then behaves as the "test" data. This partitioning is repeated for all possible iterations and the errors are averaged to help estimate performance.     
+
+```{r , echo=TRUE, eval=FALSE, message=FALSE}
+# Example of out-of-band trainControl use
+trainControl(method = "cv", number = 10)
+```
+
+If we wish, we may also perform the steps above in one sequence.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Set seed for repeatability
+set.seed(11)
+
+# Fit a linear model
+fit1 <- train(quality ~ ., data = wineTrainingData,
+             method = "lm",
+             preProcess = c("center", "scale"),
+             trControl = trainControl(method = "cv", number = 10))
+```
+
+The returned linear regression fit specifies a root mean squared error (RMSE) of ~0.755 on the training set.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# View RMSE
+fit1
+```
+
+We can fit four additional models for comparison.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+set.seed(11)
+
+# Fit a model with quadratics
+fit2 <- train(quality ~ .^2, data = wineTrainingData,
+             method = "lm",
+             preProcess = c("center", "scale"),
+             trControl = trainControl(method = "cv", number = 10))
+
+# View RMSE
+fit2
+```
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+set.seed(11)
+
+# Exclude citric.acid and pH as discussed in the planning section
+fit3 <- train(quality ~ fixed.acidity + volatile.acidity + residual.sugar + 
+    chlorides + free.sulfur.dioxide + total.sulfur.dioxide + 
+    density + sulphates + alcohol + type, data = wineTrainingData,
+             method = "lm",
+             preProcess = c("center", "scale"),
+             trControl = trainControl(method = "cv", number = 10))
+
+# View RMSE
+fit3
+```
+
+We can look at all interactions by wine type.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+set.seed(11)
+
+# Consider interactions of all variables with type
+fit4 <- train(quality ~ (fixed.acidity + volatile.acidity + residual.sugar + 
+    chlorides + free.sulfur.dioxide + total.sulfur.dioxide + 
+    density + sulphates + alcohol):type, data = wineTrainingData,
+             method = "lm",
+             preProcess = c("center", "scale"),
+             trControl = trainControl(method = "cv", number = 10))
+
+# View RMSE
+fit4
+```
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+set.seed(11)
+
+# Consider all possible combinations with type
+fit5 <- train(quality ~ (fixed.acidity*volatile.acidity + residual.sugar*alcohol +
+    chlorides + free.sulfur.dioxide*total.sulfur.dioxide + 
+    density + sulphates + type), data = wineTrainingData,
+             method = "lm",
+             preProcess = c("center", "scale"),
+             trControl = trainControl(method = "cv", number = 10))
+
+# View RMSE
+fit5
+```
+
+We can compare the results for all five models.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Side-by-side comparison of results
+data.frame(t(fit1$results), t(fit2$results), t(fit3$results), t(fit4$results), t(fit5$results))
+```
+
+
+Now that we have fitted our models, we wish to do predictions. We can use the `predict()` function on the `fit` object that was returned by the `caret` package above and view useful metrics using the `postResample()` function.
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+set.seed(11)
+
+# Do predictions using fit object
+pred1 <- predict(fit1, newdata = wineTrainingData)
+pred4 <- predict(fit4, newdata = wineTrainingData)
+
+# View useful metrics on these predictions
+postResample(pred1, obs = wineTrainingData$quality)
+postResample(pred4, obs = wineTrainingData$quality)
+```
+
+
+## Apply models to test set  
+
+Now, we can use our selected model to perform predictions on the test set. 
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+# Read in CSV test file, subset data
+wineTest <- tbl_df(read.csv(file = "./wineQualityTest.csv"))
+```
+
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
+set.seed(11)
+
+# Apply final model to test set
+pred1 <- predict(fit1, newdata = wineTest)
+pred5 <- predict(fit5, newdata = wineTest)
+
+postResample(pred1, obs = wineTest$quality)
+postResample(pred5, obs = wineTest$quality)
+```
+
+The best model had an RMSE of 0.732. The best model was one which removed two variables with mild correlation (citric.acid and pH) after gauging their Akaike information criterion (AIC). The model also included all possible interactions between `fixed.acidity` and `volatile.acidity`, `residual.sugar and alcohol`, and `free.sulfur.dioxide` and `total.sulfur.dioxide`. These interactions were selected as an educated guess (acidities and sulfur dioxides are generally to one another and sugar is a key component of fermentation) and all five RMSE values were relatively similar, suggesting that our models do a relatively poor job of predicting quality. 
+
+
+
+
+
