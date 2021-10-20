@@ -56,8 +56,8 @@ Here, we see that a medium-colored crab with both spines in "good" condition had
 # p = 0.8 places 80% of observations in the training set
 set.seed(50)
 heartIndex <- createDataPartition(newHeartData$HeartDisease, p = 0.8, list = FALSE)
-heartTrain <- diamonds[heartIndex, ]
-heartTest <- diamonds[-heartIndex, ]
+heartTrain <- newHeartData[heartIndex, ]
+heartTest <- newHeartData[-heartIndex, ]
 ```
 
 ### 4.
@@ -65,13 +65,12 @@ _Finally, train the kNN model. Use repeated 10 fold cross-validation, with the n
 
 ```{r , echo=TRUE, eval=TRUE}
 # 
-
-fit <- train(HeartDisease ~ ., data = newHeartData,
+kNNFit <- train(HeartDisease ~ ., data = heartTrain,
                method = "knn",
                preProcess = c("center", "scale"),
                trControl = trainControl(method = "repeatedcv", 
                                         number = 10, repeats = 3),  
-               tuneGrid = expand.grid(k = 1:40)) 
+               tuneGrid = data.frame(k = 1:40)) 
 ```
 
 ### 5. 
@@ -80,96 +79,80 @@ _Check how well your model does on the test set using the confusionMatrix() func
 
 ```{r , echo=TRUE, eval=TRUE}
 # See confusion matrix on test set (correct/incorrect predictions)
-confusionMatrix(data = newHeartData$HeartDisease, reference = predict(fit, newdata = newHeartData))
+confusionMatrix(data = heartTest$HeartDisease, reference = predict(kNNFit, newdata = heartTest))
 ```
 
 ## Part 2: Ensemble
 
-Medium-colored crabs outnumber other colors for all three spine conditions. 
+We’ll look at predicting the same heart disease variable in this section as well, just instead of using kNN we’ll use the following methods:
+
+### 1.
+
+_A classification tree (use `method = rpart`: tuning parameter is `cp`, use values 0, 0.001, 0.002, …, 0.1)_
 
 ```{r , echo=TRUE, eval=TRUE}
-g <- ggplot(data = crabData, aes(x = spine))
+# Create tuning parameter
+rpartParam <- seq(from = 0, to = 0.1, by = 0.001)
 
-g + geom_bar(aes(fill = color), position = "dodge") +
-  labs(x = "Female Crab Spine Condition") +
-  scale_fill_discrete(name = "Female Crab Color") + 
-  coord_flip()
+# Classification tree fit
+rpartFit <- train(HeartDisease ~ ., data = heartTrain,
+               method = "rpart",
+               preProcess = c("center", "scale"),
+               trControl = trainControl(method = "repeatedcv", 
+                                        number = 10, repeats = 3),  
+               tuneGrid = data.frame(cp = rpartParam)) 
+
+# See confusion matrix on test set (correct/incorrect predictions)
+confusionMatrix(data = heartTest$HeartDisease, reference = predict(rpartFit, newdata = heartTest))
 ```
 
+### 2.
 
-### 5. 
-
-_Recreate the set of side-by-side bar plots below. You’ll need to look up how to orient the x-axis labels to 45 degrees. Write text that comments on any patterns you see._
-
-Of the three categories of spine condition, crabs with one worn or broken spine make up the lowest number. In the category of color, medium-colored crabs outnumber all others.   
+_A bagged tree (use `method = treebag`: no tuning parameter)._
 
 ```{r , echo=TRUE, eval=TRUE}
-g <- ggplot(data = crabData, aes(x = color))
+# Bagged tree fit
+baggedTreeFit <- train(HeartDisease ~ ., data = heartTrain,
+               method = "treebag",
+               preProcess = c("center", "scale"),
+               trControl = trainControl(method = "repeatedcv", 
+                                        number = 10, repeats = 3)) 
 
-# Use facet_wrap to divide plots into subplots
-g + geom_bar(aes(fill = y), position = "dodge") +
-  facet_wrap( ~ spine) +
-  labs(x = "Female Crab Spine Condition") +
-  scale_fill_discrete(name = " ") +
-  theme(axis.text.x = element_text(angle = 45))
+# See confusion matrix on test set (correct/incorrect predictions)
+confusionMatrix(data = heartTest$HeartDisease, 
+                reference = predict(baggedTreeFit, newdata = heartTest))
 ```
 
+### 3.
 
-### 6.
-
-_Recreate the summary statistics below. Write text that interprets one of the sets of summary stats._
-
-The median weight for crabs ranges from 1900-2700 grams. Dark crabs with no satellites weigh the least, while medium- and light-colored crabs with at least 1 satellite weigh the most. With the exception of darker-colored crabs, crabs with at least 1 satellite tend to weigh more than crabs with no satellites. This disparity in weightis particularly prominent with medium-colored crabs, which comprise a substantial amount of the data set. 
-
-```{r, echo=TRUE, eval=TRUE}
-# Group data by color/y to match assignment. Then, create and rename summary columns.
-# Round numbers and arrange in descending order by color/descending y to match assignment example.
-sumCrabData <- crabData %>% group_by(color, y) %>% 
-  summarise(Avg = round(mean(weight), 0), Sd = round(sd(weight), 0), Median = median(weight), IQR = round(IQR(weight), 0)) %>%
-  arrange(color, desc(y))
-
-sumCrabData
-```
-### 7. 
-
-_Recreate the boxplots below. Write text that comments on any patterns you see._
-
-Crabs with at least 1 satellite have a higher median weight (~2,600 g) than crabs with no satellites (~2,125 g). Both plots are relatively symmetric, but the leftmost plot displays at least 1 potential outlier (exceeding past 1.5 times the IQR). 
+_A random forest (use `method = rf`: tuning parameter is `mtry`, use vales of 1, 2, …, 15)._
 
 ```{r , echo=TRUE, eval=TRUE}
-# Overlay scatterplot with geom_point and position = "jitter"
-g <- ggplot(crabData, aes(x = y, y = weight), position = "jitter")
-g + geom_boxplot() + 
-  geom_point(aes(color = y), position = "jitter") +
-  labs(title = "Boxplot for Weight")
+# Random forest fit
+rfFit <- train(HeartDisease ~ ., data = heartTrain,
+               method = "rf",
+               preProcess = c("center", "scale"),
+               trControl = trainControl(method = "repeatedcv", 
+                                        number = 10, repeats = 3),  
+               tuneGrid = data.frame(mtry = 1:15)) 
+
+# See confusion matrix on test set (correct/incorrect predictions)
+confusionMatrix(data = heartTest$HeartDisease, reference = predict(rfFit, newdata = heartTest))
 ```
 
-Crabs with at least 1 satellite have a higher median width than crabs with no satellites. The leftmost plot is relatively symmetric, while the rightmost plot is slightly left skewed. As with weight, there is at least 1 potential outlier in the leftmost plot. 
+### 4.
+
+_A boosted tree (use `method = gbm`: tuning parameters are `n.trees`, `interaction.depth`, `shrinkage`, and `n.minobsinnode`, use all combinations of `n.trees` of 25, 50, 100, 150, and 200, `interaction.depth` of 1, 2, 3, 4, `shrinkage` = 0.1, and `n.minobsinnode` = 10; Hint: use `expand.grid()` to create your data frame for `tuneGrid`)._
 
 ```{r , echo=TRUE, eval=TRUE}
-g <- ggplot(crabData, aes(x = y, y = width), position = "jitter")
-g + geom_boxplot(fill = "white") + 
-  geom_point(aes(color = y), position = "jitter") +
-  labs(title = "Boxplot for Width")
-```
+# Random forest fit
+rfFit <- train(HeartDisease ~ ., data = heartTrain,
+               method = "rf",
+               preProcess = c("center", "scale"),
+               trControl = trainControl(method = "repeatedcv", 
+                                        number = 10, repeats = 3),  
+               tuneGrid = data.frame(mtry = 1:15)) 
 
-### 8. 
-
-_Report the correlation between the weight and width variables._
-
-```{r , echo=TRUE, eval=TRUE}
-# Report the correlation
-cor(crabData$weight, crabData$width)
-```
-
-_Then recreate the scatterplot below. Write text that comments on any patterns you see._
-
-Weight and width can be modeled linearly and, with a correlation value of 0.89, both variables have a high positive correlation. We see at least three outliers with a high carapace width and a low weight, and one outlier with high carapace width and a high weight. 
-
-```{r , echo=TRUE, eval=TRUE}
-# Plot regression line with geom_smooth
-g <- ggplot(crabData, aes(x = weight, y = width))
-g + geom_point(aes(color = color, shape = y)) +
-  geom_smooth(method = lm, col = "Blue") +
-  labs(title = "Weight vs Width")
+# See confusion matrix on test set (correct/incorrect predictions)
+confusionMatrix(data = heartTest$HeartDisease, reference = predict(rfFit, newdata = heartTest))
 ```
