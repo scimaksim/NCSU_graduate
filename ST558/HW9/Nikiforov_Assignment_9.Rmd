@@ -2,11 +2,11 @@
 title: "Assignment 9"
 author: "Maksim Nikiforov"
 date: "10/19/2021"
-output: 
+output:
   html_document:
-    toc: true
+    toc: yes
     toc_depth: 3
-    toc_float: true
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -21,36 +21,33 @@ library(caret)
 
 _Read in the `heart.csv` data file._
 
+We remove the `ST_Slope` column as instructed.
+
 ```{r , echo=TRUE, eval=TRUE}
 # Read in space-separated data using "read_csv()" function.
 # Remove column ST_Slope, convert HeartDisease to a factor
 heartData <- read.csv(file = "./heart.csv") %>% select(-ST_Slope)
-heartData
 ``` 
 
 ### 2. 
 
 _Create dummy columns corresponding to the values of `Sex`, `ChestPainType`, and `RestingECG` for use in our kNN fit._
 
-```{r , echo=TRUE, eval=TRUE}
-# Read in space-separated data using "read_csv()" function.
-head(model.matrix(HeartDisease ~ ., data = heartData))
-``` 
+We can follow the example from section 3.1 in the provided [caret vignette](caret vignette) to create dummy variables. `dummyVars` ignores integers, so we specify the full set of variables with the formula `~ .` and create a new data frame, `newHeartData`.
 
 ```{r , echo=TRUE, eval=TRUE}
-# Read in space-separated data using "read_csv()" function.
+# Use dummyVars() and predict() to create new columns.
 dummies <- dummyVars( ~ ., data = heartData)
 newHeartData <- predict(dummies, newdata = heartData)
 newHeartData <- as_data_frame(newHeartData)
 newHeartData$HeartDisease <- as.factor(newHeartData$HeartDisease)
-newHeartData
 ``` 
 
 ### 3.
 
 _Now split the data set you’ve created into a training and testing set. Use `p = 0.8`._
 
-Here, we see that a medium-colored crab with both spines in "good" condition had as many as 14 satellites. Crabs with one spine worn or broken did not exceed 6 satellites.  
+We can create train and test partitions with the `createDataPartition` function.    
 
 ```{r , echo=TRUE, eval=TRUE}
 # p = 0.8 places 80% of observations in the training set
@@ -62,6 +59,8 @@ heartTest <- newHeartData[-heartIndex, ]
 
 ### 4.
 _Finally, train the kNN model. Use repeated 10 fold cross-validation, with the number of repeats being 3. You should also preprocess the data by centering and scaling. Lastly, set the `tuneGrid` so that you are considering values of k of 1, 2, 3, …, 40._
+
+The `caret` package allows us to pre-process data, fit and tune models on the training set, and predict on the test set. 
 
 ```{r , echo=TRUE, eval=TRUE}
 # 
@@ -88,10 +87,12 @@ We’ll look at predicting the same heart disease variable in this section as we
 
 ### 1.
 
-_A classification tree (use `method = rpart`: tuning parameter is `cp`, use values 0, 0.001, 0.002, …, 0.1)_
+_A classification tree (use `method = rpart`: tuning parameter is `cp`, use values 0, 0.001, 0.002, …, 0.1)._
+
+We use `seq()` to generate values from 0 to 0.1. With this method, we see an accuracy of approximately 80.33%.  
 
 ```{r , echo=TRUE, eval=TRUE}
-# Create tuning parameter
+# Create tuning parameter by generating regular sequence
 rpartParam <- seq(from = 0, to = 0.1, by = 0.001)
 
 # Classification tree fit
@@ -110,6 +111,8 @@ confusionMatrix(data = heartTest$HeartDisease, reference = predict(rpartFit, new
 
 _A bagged tree (use `method = treebag`: no tuning parameter)._
 
+Here, we see a slightly lower accuracy of 79.23%.
+
 ```{r , echo=TRUE, eval=TRUE}
 # Bagged tree fit
 baggedTreeFit <- train(HeartDisease ~ ., data = heartTrain,
@@ -127,6 +130,8 @@ confusionMatrix(data = heartTest$HeartDisease,
 
 _A random forest (use `method = rf`: tuning parameter is `mtry`, use vales of 1, 2, …, 15)._
 
+Here, we see an accuracy of ~80.87%, on part with the classification tree method. 
+
 ```{r , echo=TRUE, eval=TRUE}
 # Random forest fit
 rfFit <- train(HeartDisease ~ ., data = heartTrain,
@@ -137,22 +142,33 @@ rfFit <- train(HeartDisease ~ ., data = heartTrain,
                tuneGrid = data.frame(mtry = 1:15)) 
 
 # See confusion matrix on test set (correct/incorrect predictions)
-confusionMatrix(data = heartTest$HeartDisease, reference = predict(rfFit, newdata = heartTest))
+confusionMatrix(data = heartTest$HeartDisease, 
+                reference = predict(rfFit, newdata = heartTest))
 ```
 
 ### 4.
 
 _A boosted tree (use `method = gbm`: tuning parameters are `n.trees`, `interaction.depth`, `shrinkage`, and `n.minobsinnode`, use all combinations of `n.trees` of 25, 50, 100, 150, and 200, `interaction.depth` of 1, 2, 3, 4, `shrinkage` = 0.1, and `n.minobsinnode` = 10; Hint: use `expand.grid()` to create your data frame for `tuneGrid`)._
 
-```{r , echo=TRUE, eval=TRUE}
-# Random forest fit
-rfFit <- train(HeartDisease ~ ., data = heartTrain,
-               method = "rf",
+With this method, our accuracy with the test data set is ~79.78%. ß
+
+```{r , include=FALSE}
+# Create tuning parameters
+nTrees <- seq(from = 25, to = 200, by = 50)
+interactionDepth = 1:4
+
+# Boosted tree fit
+boostedTreeFit <- train(HeartDisease ~ ., data = heartTrain,
+               method = "gbm",
                preProcess = c("center", "scale"),
                trControl = trainControl(method = "repeatedcv", 
                                         number = 10, repeats = 3),  
-               tuneGrid = data.frame(mtry = 1:15)) 
+               tuneGrid = expand.grid(n.trees = nTrees, interaction.depth = 1:4,
+                                      shrinkage = 0.1, n.minobsinnode = 10))
+```
 
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
 # See confusion matrix on test set (correct/incorrect predictions)
-confusionMatrix(data = heartTest$HeartDisease, reference = predict(rfFit, newdata = heartTest))
+confusionMatrix(data = heartTest$HeartDisease, 
+                reference = predict(boostedTreeFit, newdata = heartTest))
 ```
