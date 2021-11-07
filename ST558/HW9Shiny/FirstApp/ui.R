@@ -22,15 +22,23 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       h3("This data set comes from the", a(href="https://topepo.github.io/caret/", target = "_blank", "caret package "), "- originally from the UCI machine learning repository"),
+      # Line break
       br(),
+      # Text line
       h4("You can create a few bar plots using the radio buttons below."),
+      
+      # Radio buttons for plot type
       radioButtons(inputId = "plotType", 
                    label = "Select the Plot Type",
-                   choices = list("Just Classification",
-                                  "Classification and Unemployed",
-                                  "Classification and Foreign")),
+                   choices = c("Just Classification" = "justClass",
+                                  "Classification and Unemployed" = "classUnemployed",
+                                  "Classification and Foreign" = "classForeign")),
+      # Line break
       br(),
-      h4("You can find the sample mean for a few variables below:"),
+      # Line of text with bold "sample mean"
+      h4("You can find the ", strong("sample mean "), "for a few variables below:"),
+      
+      # Dropdown ("variables to summarize")
       selectInput(
         inputId = "summaryVariable",
         label = "Variables to Summarize",
@@ -38,16 +46,18 @@ shinyUI(fluidPage(
         selected = "Age"
       ),
       
+      # Numeric input (number of digits to use when rounding)
       numericInput(inputId = "roundDigits",
                    label = "Select the number of digits for rounding",
                    value = 2, min = 0, max = 5),
-      
     ),
     
-    # Show a plot of the generated distribution
+    
     mainPanel(
+      # Show a bar plot ("Class" count in GermanCredit data set)
       plotOutput("dataPlot"),
       
+      # Show a DT data frame 
       dataTableOutput("dataTable")
       )
     )

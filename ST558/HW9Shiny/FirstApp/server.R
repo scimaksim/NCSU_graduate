@@ -15,36 +15,47 @@ data("GermanCredit")
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-
-    output$distPlot <- renderPlot({
-
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
-
-    })
     
+    # Numeric summaries (provided in "hint")
     dataSet<-reactive({
+      roundDig <- input$roundDigits
+      
       var <- input$summaryVariable
       GermanCreditSub <- GermanCredit[, c("Class", "InstallmentRatePercentage", var),
                                       drop = FALSE]
       tab <- aggregate(GermanCreditSub[[var]] ~ Class + InstallmentRatePercentage,
-                       data = GermanCreditSub, FUN = mean)      
+                       data = GermanCreditSub, FUN = mean) 
       
     })
-
-    #create plot
-    output$dataPlot<-renderPlot({
-      data<-dataSet()
-      
-      p<-ggplot(data=data,aes(x=Class))+geom_bar()
-      p
-    })   
-
     
+    # Barplot 
+    dataPlot<-reactive({
+      # Grab selection from radio buttons
+      radioInput <- input$plotType
+      
+      # Select plot based on radio butotn choice
+      if (radioInput == "justClass") {
+        p<-ggplot(data=GermanCredit,aes(x=Class))+geom_bar()
+        
+      } else if (radioInput == "classUnemployed") {
+        p<-ggplot(data=GermanCredit,aes(x=Class))+
+          geom_bar(aes(fill = as.character(EmploymentDuration.Unemployed)), position = "dodge") +
+          scale_fill_discrete(name = "Unemployment Status", labels=c("Employed", "Unemployed"))
+        
+      } else  {
+        p<-ggplot(data=GermanCredit,aes(x=Class))+
+          geom_bar(aes(fill = as.character(ForeignWorker)), position = "dodge") +
+          scale_fill_discrete(name = "Status", labels=c("German", "Foreign"))
+      }
+      
+      # Draw plot
+      p
+    })
+
+    # Render plot
+    output$dataPlot<-renderPlot(dataPlot())   
+
+    # Render DT data table
     output$dataTable <- renderDataTable(dataSet())
       
     })
