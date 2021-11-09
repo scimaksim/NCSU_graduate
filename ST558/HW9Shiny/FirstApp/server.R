@@ -1,6 +1,8 @@
+# Application author: Maksim Nikiforov
+# ST558 - Fall, 2021
+# Completed November 07, 2021
 #
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
+# FirstShiny application (assignment 9)
 #
 # Find out more about building applications with Shiny here:
 #
@@ -13,19 +15,30 @@ library(tidyverse)
 library(DT)
 data("GermanCredit")
 
-# Define server logic required to draw a histogram
+# Define server logic 
 shinyServer(function(input, output) {
     
-    # Numeric summaries (provided in "hint")
+    # Numeric summaries 
     dataSet<-reactive({
+      # Store number of digits by which to round third column
       roundDig <- input$roundDigits
       
+      # Use hint from assignment
       var <- input$summaryVariable
       GermanCreditSub <- GermanCredit[, c("Class", "InstallmentRatePercentage", var),
                                       drop = FALSE]
       tab <- aggregate(GermanCreditSub[[var]] ~ Class + InstallmentRatePercentage,
-                       data = GermanCreditSub, FUN = mean) 
+                       data = GermanCreditSub, FUN = mean)
       
+      # Rename third column
+      colRename <- paste0("Average ", var)
+      colnames(tab) <- c("Class", "InstallmentRatePercentage", colRename)
+      
+      # Round third column values using values from numericInput in ui.R
+      tab[3] <- round(tab[3], roundDig)
+      
+      # Print final table
+      tab
     })
     
     # Barplot 
@@ -57,7 +70,6 @@ shinyServer(function(input, output) {
 
     # Render DT data table
     output$dataTable <- renderDataTable(dataSet())
-      
     })
 
     

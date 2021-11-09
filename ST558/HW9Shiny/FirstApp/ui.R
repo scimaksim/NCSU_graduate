@@ -1,6 +1,8 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
+# Application author: Maksim Nikiforov
+# ST558 - Fall, 2021
+# Completed November 07, 2021
+# 
+# FirstShiny application (assignment 9)
 #
 # Find out more about building applications with Shiny here:
 #
@@ -12,7 +14,7 @@ data("GermanCredit")
 library(shiny)
 library(DT)
 
-# Define UI for application that draws a histogram
+# Define UI for application
 shinyUI(fluidPage(
   
   # Application title
