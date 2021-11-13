@@ -1,5 +1,5 @@
 #Start with our shiny-tidy image
-FROM rocker/shiny-verse:3.6.3
+FROM rocker/shiny-verse:latest
 
 #install some linux things and modify the shiny-server file;
 RUN apt-get update && apt-get install -y \
